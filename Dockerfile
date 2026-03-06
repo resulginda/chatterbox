@@ -1,25 +1,28 @@
-# Python 3.10 tabanlı güncel bir imaj kullanıyoruz
 FROM python:3.10-slim
 
-# Gerekli sistem kütüphanelerini yüklüyoruz (Ses işleme için lazım)
+# Ses işleme ve sistem kütüphaneleri
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     libsndfile1 \
     git \
+    gcc \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Çalışma dizinini oluştur
 WORKDIR /app
 
-# Önce tüm dosyaları kopyala (Hata almamak için README ve src dahil)
-COPY . .
-
-# Bağımlılıkları yükle
+# Bağımlılıkları kopyala ve yükle
+COPY pyproject.toml .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir .
 
-# Uygulamanın dış dünyaya açılacağı port
+# Proje dosyalarını kopyala
+COPY . .
+
+# Gradio'nun dışarıya açılması için gerekli ortam değişkeni
+ENV GRADIO_SERVER_NAME="0.0.0.0"
+
 EXPOSE 7860
 
-# Uygulamayı başlat (Chatterbox varsayılan başlatma komutu)
-CMD ["python", "-m", "chatterbox"]
+# Uygulamayı başlatmak için chatterbox-tts'in kendi CLI komutunu kullanalım
+CMD ["chatterbox", "launch"]
